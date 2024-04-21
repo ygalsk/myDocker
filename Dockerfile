@@ -1,38 +1,50 @@
-# syntax=docker/dockerfile:1
-FROM ubuntu:22.04
+# Use the official Ubuntu base image
+FROM ubuntu:latest
 
-# Set timezone
+# Set timezone to Europe/Berlin
 ENV TZ=Europe/Berlin
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
-# Update package lists and install dependencies
+# Install essential tools and utilities
 RUN apt-get update && apt-get install -y \
-    zsh \
     wget \
-    valgrind \
+    git \
     curl \
-    python3 \
-    python3-pip \
+    unzip \
     build-essential \
-    libreadline-dev \
-    psmisc \
-    php \
-    git
+    software-properties-common
+
+# Install Neovim and dependencies
+RUN add-apt-repository ppa:neovim-ppa/stable && \
+    apt-get update && \
+    apt-get install -y \
+    neovim \
+    python3-neovim \
+    python3-pip
 
 # Install LazyGit
-RUN LAZYGIT_VERSION=$(curl -s "https://api.github.com/repos/jesseduffield/lazygit/releases/latest" | grep -Po '"tag_name": "v\K[^"]*') \
-    && curl -Lo lazygit.tar.gz "https://github.com/jesseduffield/lazygit/releases/latest/download/lazygit_${LAZYGIT_VERSION}_Linux_x86_64.tar.gz" \
-    && tar xf lazygit.tar.gz lazygit \
-    && mv lazygit /usr/local/bin \
-    && chmod +x /usr/local/bin/lazygit \
-    && rm -f lazygit.tar.gz
+RUN wget -O lazygit.tar.gz https://github.com/jesseduffield/lazygit/releases/download/v0.29.1/lazygit_0.29.1_Linux_x86_64.tar.gz && \
+    tar -xvf lazygit.tar.gz && \
+    mv lazygit /usr/local/bin && \
+    chmod +x /usr/local/bin/lazygit && \
+    rm lazygit.tar.gz
 
-# Set up zsh
-RUN sh -c "$(wget -O /root/.zshrc https://git.grml.org/f/grml-etc-core/etc/zsh/zshrc)"
+# Set up a default user with non-root privileges
+ARG USERNAME=dkremer
+ARG USER_UID=1000
+ARG USER_GID=$USER_UID
 
-# Install Norminette
-RUN pip3 install setuptools \
-    && pip3 install norminette
+RUN groupadd --gid $USER_GID $USERNAME && \
+    useradd --uid $USER_UID --gid $USER_GID -m $USERNAME && \
+    apt-get install sudo && \
+    echo $USERNAME ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/$USERNAME && \
+    chmod 0440 /etc/sudoers.d/$USERNAME
 
-# Set working directory
-WORKDIR /host/
+# Switch to the non-root user
+USER $USERNAME
+
+# Set the default editor to Neovim
+ENV EDITOR=nvim
+
+# Set the default entry point to Neovim
+ENTRYPOINT ["nvim"]
