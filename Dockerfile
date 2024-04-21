@@ -15,7 +15,7 @@ RUN apt-get update && apt-get install -y \
     software-properties-common
 
 # Install Neovim and dependencies
-RUN add-apt-repository ppa:neovim-ppa/stable && \
+RUN add-apt-repository ppa:neovim-ppa/unstable && \
     apt-get update && \
     apt-get install -y \
     neovim \
