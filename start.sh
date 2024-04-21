@@ -13,12 +13,20 @@ IMAGE_NAME="dev-env"
 CONTAINER_NAME="dev-container"
 
 # Path to the directory containing the Dockerfile
-DOCKERFILE_DIR="$(dirname "$0")"
+DOCKERFILE_DIR="$(pwd)"
 
 echo "${blue}Building Docker image...${reset}"
-# Build the Docker image with increased verbosity
-docker build --progress=plain -t "$IMAGE_NAME" "$DOCKERFILE_DIR" && \
-echo "${green}Docker image built successfully.${reset}"
+# Build the Docker image and capture output
+build_output=$(docker build -t "$IMAGE_NAME" "$DOCKERFILE_DIR" 2>&1)
+
+# Check if build was successful
+if [ $? -eq 0 ]; then
+    echo "${green}Docker image built successfully.${reset}"
+else
+    echo "${red}Failed to build Docker image:${reset}"
+    echo "$build_output" | tail -n 5  # Show last 5 lines of build output
+    exit 1  # Exit script with error code
+fi
 
 echo "${blue}Starting Docker container...${reset}"
 # Run the Docker container
