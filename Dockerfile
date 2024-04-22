@@ -12,7 +12,15 @@ RUN apt-get update && apt-get install -y \
     curl \
     unzip \
     build-essential \
-    software-properties-common
+    software-properties-common \
+    valgrind \
+    python3 python3-pip \
+    yamd \
+    zsh
+
+# Insatll  with pip
+RUN pip3 install setuptools \
+    norminette
 
 # Install Neovim and dependencies
 RUN add-apt-repository ppa:neovim-ppa/unstable && \
